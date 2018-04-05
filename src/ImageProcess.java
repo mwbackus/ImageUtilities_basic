@@ -1,9 +1,6 @@
 import java.awt.Color;
 import java.util.Random;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-
 /** 
  * Image Processing
  * Michael Backus
@@ -47,7 +44,14 @@ public class ImageProcess {
 		utils.addImage(sharpen_img, "Unsharp Mask");
 		
 		Color[][] edgedetect_img = rgb_edges(orig);
-		utils.addImage(sharpen_img, "Detect Edges");
+		utils.addImage(edgedetect_img, "Edge Detect");
+		
+		Color[][] makewarm_img = rgb_warm(orig);
+		utils.addImage(makewarm_img, "Make Warm");
+		
+		Color[][] makecool_img = rgb_cool(orig);
+		utils.addImage(makecool_img, "Make Cool");
+		
 		
 		// Display the image
 		utils.display();
@@ -103,8 +107,9 @@ public class ImageProcess {
 		return tmp;
 	}
 	
-	public static Color[][] rgb_addnoise(Color [][] img) {
+	public static Color[][] rgb_addnoise(Color [][] img) { // **** DONE ****
 		/** Adds noise to the input image */
+		
 		// Copy the array and store it as tmp
 		Color[][] tmp = ImageUtils.cloneArray(img);
 
@@ -125,11 +130,11 @@ public class ImageProcess {
 						
 						// Assign new color values
 						try {
-						Random rand = new Random();
-						min = tmpColor - 20;
-						max = tmpColor + 20;
-						int newColor = (max + (int)(Math.random() * ((max-min) + 1)));
-						rgb[v] = newColor - 40;
+							Random rand = new Random();
+							min = tmpColor - 20;
+							max = tmpColor + 20;
+							int newColor = (max + (int)(Math.random() * ((max-min) + 1)));
+							rgb[v] = newColor - 40;
 						} catch (Exception ex) {
 							continue; //RGB out of range
 						}
@@ -290,5 +295,66 @@ public class ImageProcess {
 		}
 		return tmp;
 	}
+	
+	public static Color[][] rgb_warm(Color [][] img) {
+		/** Shift the hue to a warmer color */
+		
+		// Copy the array and store it as tmp
+		Color[][] tmp = ImageUtils.cloneArray(img);
+		
+		// Iterate through the pixels
+		for (int i=0; i <tmp.length; i++) {
+			for (int j=0; j<tmp[i].length; j++) {
+				
+				//Check if the selected value is within range
+				Color pixel = tmp[i][j];
+				int r = pixel.getRed();
+				int g = pixel.getGreen();
+				int b = pixel.getBlue();
+				try {
+				tmp[i][j] = new Color(r+20, g, b);
+				
+				// If value is out of range, keep at original color
+				} catch (Exception ex) {
+					continue;
+				}
+			}
+		}
+		return tmp;
+	}
+
+	
+	public static Color[][] rgb_cool(Color [][] img) {
+		/** Shift the hue to a cooler color */
+		
+		// Copy the array and store it as tmp
+		Color[][] tmp = ImageUtils.cloneArray(img);
+		
+		// Iterate through the pixels
+		for (int i=0; i <tmp.length; i++) {
+			for (int j=0; j<tmp[i].length; j++) {
+				
+				//Check if the selected value is within range
+				Color pixel = tmp[i][j];
+				int r = pixel.getRed();
+				int g = pixel.getGreen();
+				int b = pixel.getBlue();
+				try {
+				tmp[i][j] = new Color(r, g, b+20);
+				
+				// If value is out of range, keep at original color
+				} catch (Exception ex) {
+					continue;
+				}
+			}
+		}
+		return tmp;
+	}
+	
+	
+	
+	
+	// Additional utilities
+	
 	
 }
