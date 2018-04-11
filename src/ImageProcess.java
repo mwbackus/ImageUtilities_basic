@@ -1,5 +1,4 @@
 import java.awt.Color;
-import java.util.Random;
 
 /** 
  * Image Processing
@@ -22,6 +21,18 @@ public class ImageProcess {
 		utils.addImage(orig, "Original");
 
 		// Add the process methods
+		int blurSize = 6; // MODIFY this for BLUR SIZE!
+		Color[][] blur_img = rgb_boxblur(orig, blurSize);
+		utils.addImage(blur_img, "Box Blur "+blurSize+"px");
+		
+		int pixelateSize = 8; // MODIFY this for PIXELATE SIZE! Must be a POWER of 2!
+		Color[][] edgedetect_img = rgb_pixelate(orig, pixelateSize);
+		utils.addImage(edgedetect_img, "Pixelate "+pixelateSize+"px");	
+		
+		int reductionSize = 64; // MODIFY this for REDUCTION AMOUNT! Must be a POWER of 2!
+		Color[][] reducecolors_img = rgb_reducecolors(orig, reductionSize);
+		utils.addImage(reducecolors_img, "Reduce Depth "+reductionSize+"x");
+
 		Color[][] grayscale_img = rgb_to_grayscale(orig);
 		utils.addImage(grayscale_img, "Scalar RGB");
 	
@@ -31,29 +42,15 @@ public class ImageProcess {
 		Color[][] noisy_img = rgb_addnoise(orig);
 		utils.addImage(noisy_img, "Add Noise");
 
-		//Color[][] reducecolors_img = rgb_reducecolors(orig);
-		//utils.addImage(reducecolors_img, "Reduce Depth");
-		
 		Color[][] replacecolors_img = rgb_replacecolors(orig);
-		utils.addImage(replacecolors_img, "Replace Hue");
-		
-		int blurSize = 8; // MODIFY this for BLUR SIZE!
-		Color[][] blur_img = rgb_boxblur(orig, blurSize);
-		utils.addImage(blur_img, "Box Blur "+blurSize+"px");
-		
-		Color[][] sharpen_img = rgb_sharpen(orig);
-		utils.addImage(sharpen_img, "Unsharp Mask");
-		
-		Color[][] edgedetect_img = rgb_edges(orig);
-		utils.addImage(edgedetect_img, "Edge Detect");	
-		
+		utils.addImage(replacecolors_img, "Enhance Feathers");
+
 		// Display the image
 		utils.display();
 	}
 	
-	
+
 	// Processing Methods
-	
 	public static Color[][] rgb_to_grayscale(Color [][] img) {
 		/** Converts the RGB input image to a scalar image */
 		// Copy the array and store it as tmp
@@ -102,7 +99,7 @@ public class ImageProcess {
 		return tmp;
 	}
 	
-	public static Color[][] rgb_addnoise(Color [][] img) { // **** DONE ****
+	public static Color[][] rgb_addnoise(Color [][] img) {
 		/** Adds noise to the input image */
 		
 		// Copy the array and store it as tmp
@@ -125,7 +122,6 @@ public class ImageProcess {
 						
 						// Assign new color values
 						try {
-							Random rand = new Random();
 							min = tmpColor - 20;
 							max = tmpColor + 20;
 							int newColor = (max + (int)(Math.random() * ((max-min) + 1)));
@@ -142,43 +138,31 @@ public class ImageProcess {
 		return tmp;
 	}
 	
-	public static Color[][] rgb_reducecolors(Color [][] img) {
+	public static Color[][] rgb_reducecolors(Color [][] img, int reduceAmount) {
 		/** Reduce the image colors */
+		
+		int FACTOR = reduceAmount;
 		
 		// Copy the array and store it as tmp
 		Color[][] tmp = ImageUtils.cloneArray(img);
 
-		// Iterate through the pixels
+		// Iterate though the pixels
 		for (int i=0; i <tmp.length; i++) {
 			for (int j=0; j<tmp[i].length; j++) {
 				
 				// Get pixel information
 				Color pixel = tmp[i][j];
-				int[] rgb = { pixel.getRed(), pixel.getGreen(), pixel.getBlue() };
-				
-				// Iterate through the pixel channels and replace with new colors
-				for (int v = 0; v > rgb.length; v++) {
 					
-					//Get and set the appropriate color for the channel
-					int tmpColor = rgb[v]; int min = 0; int max = 0;
-					if (tmpColor >= 30 && tmpColor <= 225) {
-						
-						// Assign new color values
-						try {
-							Random rand = new Random();
-							min = tmpColor - 20;
-							max = tmpColor + 20;
-							int newColor = (max + (int)(Math.random() * ((max-min) + 1)));
-							rgb[v] = newColor - 40;
-						} catch (Exception ex) {
-							continue; //RGB out of range
-						}
-					}
-				}
+				//Divide the color by the factor, truncate the value
+				int r = (int)pixel.getRed()/FACTOR;
+				int g = (int)pixel.getGreen()/FACTOR;
+				int b = (int)pixel.getBlue()/FACTOR;
+
 				// Assign new pixel value
-				tmp[i][j] = new Color(rgb[0], rgb[1], rgb[2]);
+				tmp[i][j] = new Color(r*=FACTOR, g*=FACTOR, b*=FACTOR);
+				
 			}
-		} 
+		}
 		return tmp;
 	}
 	
@@ -215,42 +199,31 @@ public class ImageProcess {
 		return tmp;
 	}
 	
-	public static Color[][] rgb_gaussianblur(Color [][] img) {
-		/** Blur the image */
+	public static Color[][] rgb_pixelate(Color [][] img, int pixelAmount) {
+		/** Pixelate the image */
 		
-		double v = 1.0 / 9.0;
-		double[][] blur_kernel = { 	{v, v, v}, 
-									{v, v, v}, 
-									{v, v, v} };
-		
-		
+		int SIZE = pixelAmount;
+
 		// Copy the array and store it as tmp
 		Color[][] tmp = ImageUtils.cloneArray(img);
-		
 
 		// Iterate through the pixels
-		for (int i=0; i <tmp.length; i++) {
-			for (int j=0; j<tmp[i].length; j++) {
+		for (int x=0; x <tmp.length; x+=SIZE) {
+			for (int y=0; y<tmp[x].length; y+=SIZE) {
 				
-				// Get pixel information
-				Color pixel = tmp[i][j];
-				//int[] rgb = { pixel.getRed(), pixel.getGreen(), pixel.getBlue() };
-				
-				double sum = 0; // Kernel sum for this pixel
-				
-				
-				
-				
-				// Assign new pixel value
-				tmp[i][j] = new Color(0, 0, 0);
+				// Replace horizontal pixels
+				for (int i = 0; i < SIZE; i++) {
+					tmp[x+i][y] = new Color (tmp[x][y].getRed(), tmp[x][y].getGreen(), tmp[x][y].getBlue());
+					// Replace vertical pixels
+					for (int j = 0; j < SIZE; j++){
+						tmp[x+i][y+j] = new Color (tmp[x][y].getRed(), tmp[x][y].getGreen(), tmp[x][y].getBlue());
+					}
+				}				
 			}
 		} 
 		return tmp;
-	}
+	} 
 	
-	
-	
-
 	public static Color[][] rgb_boxblur(Color [][] img, int blurAmount) {
 		/** Blurs the image using the box blur concept */
 		
@@ -263,9 +236,6 @@ public class ImageProcess {
 		// Iterate through the pixels
 		for (int i=0; i <tmp.length; i++) {
 			for (int j=0; j<tmp[i].length; j++) {
-				
-				// Create pixel object to store pixel information
-				Color pixel = tmp[i][j];
 				
 				// Sum the horizontal pixel RGB channel values. Mirror edge pixels
 				int x_red = 0; int x_green = 0; int x_blue = 0;
@@ -323,56 +293,7 @@ public class ImageProcess {
 			}
 		} 
 		return tmp;
-	} 
-	
-
-
-	
-	public static Color[][] rgb_sharpen(Color [][] img) {
-		/** Sharpen the image */
-		// Copy the array and store it as tmp
-		Color[][] tmp = ImageUtils.cloneArray(img);
-		
-		for (int i=0; i <tmp.length; i++) {
-			for (int j=0; j<tmp[i].length; j++) {
-				//Check whether row is less than half the image
-				if (i < tmp.length/2) {
-					//tmp[i][j] = new Color(0,0,0); //RGB 0-255
-					Color pixel = tmp[i][j];
-					int r = pixel.getRed()/2;
-					int g = pixel.getGreen();
-					int b = pixel.getBlue();
-				tmp[i][j] = new Color(r, 0, 0);
-				}
-			}
-		}
-		return tmp;
-	}
-	
-	public static Color[][] rgb_edges(Color [][] img) {
-		/** Detects the image edges */
-		// Copy the array and store it as tmp
-		Color[][] tmp = ImageUtils.cloneArray(img);
-		
-		for (int i=0; i <tmp.length; i++) {
-			for (int j=0; j<tmp[i].length; j++) {
-				//Check whether row is less than half the image
-				if (i < tmp.length/2) {
-					//tmp[i][j] = new Color(0,0,0); //RGB 0-255
-					Color pixel = tmp[i][j];
-					int r = pixel.getRed()/2;
-					int g = pixel.getGreen();
-					int b = pixel.getBlue();
-				tmp[i][j] = new Color(r, 0, 0);
-				}
-			}
-		}
-		return tmp;
-	}
-	
-
-		
-	// Additional utilities
+	} 	
 	
 	
 }
