@@ -1,3 +1,4 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -34,6 +35,8 @@ public class ImageUtils {
   ImageUtils() {
     // Create a new frame to display on screen.
     frame = new JFrame("Basic Image Tool");
+    
+    frame.setLayout(new BorderLayout());
 
     // The exit application default window close operation.
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

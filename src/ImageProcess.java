@@ -1,3 +1,4 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
 
 /** 
@@ -32,6 +33,12 @@ public class ImageProcess {
 		int reductionSize = 64; // MODIFY this for REDUCTION AMOUNT! Must be a POWER of 2!
 		Color[][] reducecolors_img = rgb_reducecolors(orig, reductionSize);
 		utils.addImage(reducecolors_img, "Reduce Depth "+reductionSize+"x");
+		
+		Color[][] add_ssao_img = rgb_screenbased_ambient_occlusion(orig);
+		utils.addImage(add_ssao_img, "Screen-Based Ambient Occlusion");
+		
+		Color[][] replacecolors_img = rgb_replacecolors(orig);
+		utils.addImage(replacecolors_img, "Enhance Feathers");
 
 		Color[][] grayscale_img = rgb_to_grayscale(orig);
 		utils.addImage(grayscale_img, "Scalar RGB");
@@ -41,9 +48,6 @@ public class ImageProcess {
 		
 		Color[][] noisy_img = rgb_addnoise(orig);
 		utils.addImage(noisy_img, "Add Noise");
-
-		Color[][] replacecolors_img = rgb_replacecolors(orig);
-		utils.addImage(replacecolors_img, "Enhance Feathers");
 
 		// Display the image
 		utils.display();
@@ -294,6 +298,37 @@ public class ImageProcess {
 		} 
 		return tmp;
 	} 	
+	
+	public static Color[][] rgb_screenbased_ambient_occlusion(Color [][] img) {
+		/** Adds pseudo SSAO to the image and shift the white balance a little towards blue */
+		
+		// Stack the effects: Make grayscale, add blur
+		Color[][] original = ImageUtils.cloneArray(img);
+		Color[][] rgb_gray = rgb_to_grayscale(original);
+		Color[][] rgb_gray_blurred = rgb_boxblur(rgb_gray, 8);
+		Color[][] rgb_final_img = ImageUtils.cloneArray(img);
+		
+		// Iterate through the pixels
+		for (int i=0; i <rgb_gray_blurred.length; i++) {
+			for (int j=0; j<rgb_gray_blurred[i].length; j++) {
+				int r = 0; int g = 0; int b = 0;
+				
+				// Create two temporary pixels
+				Color pixelGray = rgb_gray_blurred[i][j];
+				Color pixelOrig = rgb_final_img[i][j];
+				
+				// Multiply the blurred grayscale image over the original
+				// Note: This strategy works best for the Lenna image and will break for others
+				r = (int)pixelGray.getRed() * pixelOrig.getRed() / 200 - 5;
+				g = (int)pixelGray.getGreen() * pixelOrig.getGreen() / 200 + 5;
+				b = (int)pixelGray.getBlue() * pixelOrig.getBlue() / 200 + 5;
+
+				// Assign a new color value to the pixel
+				rgb_final_img[i][j] = new Color (r, g, b);
+				}
+			}
+		return rgb_final_img;
+	}
 	
 	
 }
